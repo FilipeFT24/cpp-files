@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "DynArray.h"
+#include "erase2.h"
 
 namespace Test{
     //------------------------------------------------------------------------------------------------------------------
@@ -8,14 +9,14 @@ namespace Test{
     };
     TEST(DynArray_1D, T1){
         //--------------------------------------------------------------------------------------------------------------
-        vla::dynarray<int> a;
-        vla::dynarray<int> b(3U);
-        vla::dynarray<int> c(3U, 1);
-        vla::dynarray<int> d{1, 2, 3};
-        vla::dynarray<int> e(d);
-        vla::dynarray<int> f(std::move(e));
-        vla::dynarray<int> g; g = f;
-        vla::dynarray<int> h; h = std::move(f);
+        vla::dynarray<int, 1U> a;
+        vla::dynarray<int, 1U> b(3U);
+        vla::dynarray<int, 1U> c(3U, 1);
+        vla::dynarray<int, 1U> d{1, 2, 3};
+        vla::dynarray<int, 1U> e(d);
+        vla::dynarray<int, 1U> f(std::move(e));
+        vla::dynarray<int, 1U> g; g = f;
+        vla::dynarray<int, 1U> h; h = std::move(f);
         //--------------------------------------------------------------------------------------------------------------
         EXPECT_EQ(b[0U], 0); EXPECT_EQ(b.at(0U), 0); //!<b(0) = 0. //!<dynarray b.
         EXPECT_EQ(b[1U], 0); EXPECT_EQ(b.at(1U), 0); //!<b(1) = 0.
@@ -49,6 +50,17 @@ namespace Test{
     //------------------------------------------------------------------------------------------------------------------
     class DynArray_ND : public ::testing::Test{
     };
+    TEST(DynArray_ND, T1){
+        //--------------------------------------------------------------------------------------------------------------
+        vla::dynarray<int, 3U> a;
+        vla::dynarray<int, 3U> b(1U, 2U, 3U);
+        vla::dynarray<int, 3U> c(1U, 2U, 3U, 4);
+        //--------------------------------------------------------------------------------------------------------------
+
+
+        std::cout << c[0][1][2] << std::endl;
+
+    }
     //------------------------------------------------------------------------------------------------------------------
 }
 int main(int argc, char **argv){

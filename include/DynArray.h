@@ -12,13 +12,209 @@
 #include<stdexcept>
 
 namespace vla{
+    //------------------------------------------------------------------------------------------------------------------
+    //!
+    //! @brief Auxiliary aliases.
+    //!
+    using size_d = std::ptrdiff_t; //!<Type difference alias.
+    using size_t = std::size_t;    //!<Type size       alias.
+    //------------------------------------------------------------------------------------------------------------------
     //!
     //! @brief N-D (dynamic) array template.
     //!
     template<typename T, size_t N = 1U, template<typename U> typename A = std::allocator>
     class dynarray{
-    };
+    private:
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Type aliases.
+        //!
+        using       type_v =       T;                    //!<         Type value      alias (contig. array).
+        using const_type_v = const T;                    //!<Constant type value      alias (contig. array).
+        using       type_p =       type_v*;              //!<         Type pointer    alias (contig. array).
+        using const_type_p = const type_v*;              //!<Constant type pointer    alias (contig. array).
+        using       type_a =     A<type_v>;              //!<         Type allocator  alias (contig. array).
+        using       TYPE_V =       dynarray<T, N-1U, A>; //!<         Type value      alias (        array block(s)).
+        using const_TYPE_V = const dynarray<T, N-1U, A>; //!<Constant type value      alias (        array block(s)).
+        using       TYPE_P =       TYPE_V*;              //!<         Type pointer    alias (        array block(s)).
+        using const_TYPE_P = const TYPE_V*;              //!<Constant type pointer    alias (        array block(s)).
+        using       TYPE_R =       TYPE_V&;              //!<         Type reference  alias (        array block(s)).
+        using const_TYPE_R = const TYPE_V&;              //!<Constant type reference  alias (        array block(s)).
+        using       TYPE_A =     A<TYPE_V>;              //!<         Type allocator  alias (        array block(s)).
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Member variables.
+        //!
+        size_t size_;      //!<Type              size.           //!<n(0)*n(1)*n(2)*...
+        type_a allocator_; //!<Type              allocator.
+        type_p data_;      //!<Type (pointer to) data (content).
+        type_p head_;      //!<Type (pointer to) head.
+        type_p tail_;      //!<Type (pointer to) tail.
+        size_t SIZE_;      //!<Type              size (N).       //!<n.
+        TYPE_A ALLOCATOR_; //!<Type              allocator.
+        TYPE_P DATA_;      //!<Type (pointer to) data (content).
+        //--------------------------------------------------------------------------------------------------------------
+    public:
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Implicitly-defined member functions.
+        //!
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Constructor.
+        //! @note  Example: vla::dynarray<int, 2> a
+        //!                 vla::dynarray<int, 3> a
+        //!                 ...
+        //!
+        explicit dynarray() noexcept{
+            // Initialise...
+            size_ = 0U;
+            data_ = nullptr;
+            head_ = nullptr;
+            tail_ = nullptr;
+            SIZE_ = 0U;
+            DATA_ = nullptr;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Constructor.
+        //!
+        template<typename ... Args>
+        explicit dynarray(size_t n, Args&& ... args){
+            // Check the number of (input) arguments...
+            if(1U+sizeof ... (args) < N){
+                throw std::invalid_argument("dynarray<T, N, A>::dynarray(size_t, Args&& ...)");
+            }
+            // Set sizes...
+            size_ = n*TYPE_V::get(std::forward<Args>(args)...);
+            SIZE_ = n;
 
+            if(size_ == 0U){
+                // Initialise...
+                data_ = nullptr;
+                head_ = nullptr;
+                tail_ = nullptr;
+                SIZE_ = 0U;
+                DATA_ = nullptr;
+            }
+            else{
+                if(size_ >= max_size()){
+                    throw std::invalid_argument("dynarray<T, N, A>::dynarray(size_t, Args&& ...)");
+                }
+                // Initialise...
+                DATA_ = ALLOCATOR_.allocate(SIZE_); //!<Allocate n blocks.
+                data_ = allocator_.allocate(size_); //!<Allocate n elements (contig. array).
+                head_ = data_;
+                tail_ = head_+size_-1U;
+                // Assign...
+                for(size_t i = 0U; i < SIZE_; ++i){
+                    std::allocator_traits<TYPE_A>::construct(ALLOCATOR_, DATA_+i);
+
+
+
+                    (DATA_+i)->allocator_ = allocator_;
+                    (DATA_+i)->alloc(data_+size_/n*i, std::forward<Args>(args)...);
+                }
+            }
+        }
+
+        template<typename ... Args>
+        void alloc(type_p p, size_t n, Args&& ... args){
+            // Initialise...
+
+            size_t size_blk = TYPE_V::get(std::forward<Args>(args)...);
+
+            DATA_ = ALLOCATOR_.allocate(n);
+            data_ = nullptr;
+            head_ = p;
+            tail_ = head_+n*size_blk-1U;
+            // Assign...
+            for(size_t i = 0U; i < n; ++i){
+                std::allocator_traits<TYPE_A>::construct(ALLOCATOR_, p+i);
+
+                (DATA_+i)->allocator_ = allocator_;
+                (DATA_+i)->alloc(p+i*size_blk, std::forward<Args>(args)...);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Destructor.
+        //!
+        ~dynarray() noexcept{
+            if(DATA_ != nullptr){
+                for(size_t i = SIZE_; i > 0U; --i){
+                    std::allocator_traits<TYPE_A>::destroy(ALLOCATOR_, DATA_+i-1U);
+                }
+                ALLOCATOR_.deallocate(DATA_, SIZE_);
+            }
+            if(data_ != nullptr){
+                for(size_t i = size_; i > 0U; --i){
+                    std::allocator_traits<type_a>::destroy(allocator_, data_+i-1U);
+                }
+                allocator_.deallocate(data_, size_);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Template class.
+        //!
+        friend class dynarray<T, N+1U, A>;
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Element access: at.
+        //!                        operator[].
+        //!                        front.
+        //!                        back.
+        //!                        data.
+        //!
+        TYPE_R operator[](size_t i) noexcept{
+            return *(DATA_+i);
+        }
+        const_TYPE_R operator[](size_t i) const noexcept{
+            return *(DATA_+i);
+        }
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Iterators: begin.
+        //!                   end.
+        //!
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Capacity: empty.
+        //!                  size.
+        //!                  max_size.
+        //!
+        bool empty() const{
+            return SIZE_ == 0U;
+        }
+        size_t size() const{
+            return SIZE_;
+        }
+        size_t max_size() const{
+            return static_cast<size_t>(std::numeric_limits<size_d>::max());
+        }
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Operations: fill.
+        //!                    swap.
+        //!
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Non-member functions: operator<< .
+        //!                              operator== .
+        //!                              operator!= .
+        //!
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Auxiliary functions.
+        //!
+        template<typename ... Args>
+        static size_t get(size_t n, Args&& ... args){
+            return TYPE_V::get(std::forward<Args>(args)...)*n;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+    };
+    //------------------------------------------------------------------------------------------------------------------
     //!
     //! @brief 1-D (dynamic) array template.
     //!
@@ -30,23 +226,21 @@ namespace vla{
         //! @brief Type aliases.
         //!
         using       type_v =       T;              //!<         Type value      alias.
-        using const_type_v = const T;              //!<Constant Type value      alias.
+        using const_type_v = const T;              //!<Constant type value      alias.
         using       type_p =       type_v*;        //!<         Type pointer    alias.
-        using const_type_p = const type_v*;        //!<Constant Type pointer    alias.
+        using const_type_p = const type_v*;        //!<Constant type pointer    alias.
         using       type_r =       type_v&;        //!<         Type reference  alias.
-        using const_type_r = const type_v&;        //!<Constant Type reference  alias.
+        using const_type_r = const type_v&;        //!<Constant type reference  alias.
         using       type_a =     A<type_v>;        //!<         Type allocator  alias.
-        using       size_d =       std::ptrdiff_t; //!<         Type difference alias.
-        using       size_t =       std::size_t;    //!<         Type size       alias.
         //--------------------------------------------------------------------------------------------------------------
         //!
         //! @brief Member variables.
         //!
-        type_a _allocator; //!<Container/self              allocator.
-        type_p _data;      //!<Container/self (pointer to) data (content).
-        type_p _head;      //!<Container/self (pointer to) head.
-        type_p _tail;      //!<Container/self (pointer to) tail.
-        size_t _size;      //!<Container/self              size.
+        size_t size_;      //!<Type              size.
+        type_a allocator_; //!<Type              allocator.
+        type_p data_;      //!<Type (pointer to) data (content).
+        type_p head_;      //!<Type (pointer to) head.
+        type_p tail_;      //!<Type (pointer to) tail.
         //--------------------------------------------------------------------------------------------------------------
     public:
         //--------------------------------------------------------------------------------------------------------------
@@ -56,110 +250,110 @@ namespace vla{
         //--------------------------------------------------------------------------------------------------------------
         //!
         //! @brief Constructor.
-        //! @note  Example: vla::dynarray<int>    a
-        //!                 vla::dynarray<int, 1> a
+        //! @note  Example: vla::dynarray<int>     a
+        //!                 vla::dynarray<int, 1U> a
         //!
-        dynarray() noexcept{
+        explicit dynarray() noexcept{
             // Initialise...
-            _size = 0U;
-            _data = nullptr;
-            _head = nullptr;
-            _tail = nullptr;
+            size_ = 0U;
+            data_ = nullptr;
+            head_ = nullptr;
+            tail_ = nullptr;
         }
         //--------------------------------------------------------------------------------------------------------------
         //!
         //! @brief Constructor.
-        //! @note  Example: vla::dynarray<int>    a(1)    : 5-element (integer) array filled with 0's (default value).
-        //!                 vla::dynarray<int, 1> a(1)    : 5-element (integer) array filled with 0's (default value).
-        //!                 vla::dynarray<int>    a(1, 5) : 5-element (integer) array filled with 1's.
-        //!                 vla::dynarray<int, 1> a(1, 5) : 5-element (integer) array filled with 1's.
+        //! @note  Example: vla::dynarray<int>     a(1U)    : 5-element (integer) array filled with 0's (default value).
+        //!                 vla::dynarray<int, 1U> a(1U)    : 5-element (integer) array filled with 0's (default value).
+        //!                 vla::dynarray<int>     a(1U, 5) : 5-element (integer) array filled with 1's.
+        //!                 vla::dynarray<int, 1U> a(1U, 5) : 5-element (integer) array filled with 1's.
         //! @see   https://stackoverflow.com/questions/37935393/pass-by-value-vs-pass-by-rvalue-reference
         //!
         template<typename ... Args>
         explicit dynarray(size_t n, Args&& ... args){
             if(n == 0U){
                 // Initialise...
-                _size = 0U;
-                _data = nullptr;
-                _head = nullptr;
-                _tail = nullptr;
+                size_ = 0U;
+                data_ = nullptr;
+                head_ = nullptr;
+                tail_ = nullptr;
             }
             else{
                 if(n >= max_size()){
                     throw std::invalid_argument("dynarray<T, 1, A>::dynarray(size_t, Args&& ...)");
                 }
                 // Initialise...
-                _size =  n;
-                _data = _allocator.allocate(_size);
-                _head = _data;
-                _tail = _data+_size-1;
-                // Assign...
-                for(size_t i = 0U; i < _size; ++i){
-                    std::allocator_traits<type_a>::construct(_allocator, _data+i, std::forward<Args>(args)...);
+                size_ = n;
+                data_ = allocator_.allocate(size_);
+                head_ = data_;
+                tail_ = head_+size_-1U;
+                // Construct...
+                for(size_t i = 0U; i < size_; ++i){
+                    std::allocator_traits<type_a>::construct(allocator_, data_+i, std::forward<Args>(args)...);
                 }
             }
         }
         //--------------------------------------------------------------------------------------------------------------
         //!
         //! @brief Constructor.
-        //! @note  Example: vla::dynarray<int>    a{1, 1, 1, 1, 1} : 5-element (integer) array filled with 1's.
-        //!                 vla::dynarray<int, 1> a{1, 1, 1, 1, 1} : 5-element (integer) array filled with 1's.
+        //! @note  Example: vla::dynarray<int>     a{1, 1, 1, 1, 1} : 5-element (integer) array filled with 1's.
+        //!                 vla::dynarray<int, 1U> a{1, 1, 1, 1, 1} : 5-element (integer) array filled with 1's.
         //!
-        dynarray(std::initializer_list<T> il){
+        explicit dynarray(std::initializer_list<T> il){
             if(il.size() == 0U){
                 // Initialise...
-                _size = 0U;
-                _data = nullptr;
-                _head = nullptr;
-                _tail = nullptr;
+                size_ = 0U;
+                data_ = nullptr;
+                head_ = nullptr;
+                tail_ = nullptr;
             }
             else{
                 if(il.size() >= max_size()){
                     throw std::invalid_argument("dynarray<T, 1, A>::dynarray(std::initializer_list<T>)");
                 }
                 // Initialise...
-                _size =  il.size();
-                _data = _allocator.allocate(_size);
-                _head = _data;
-                _tail = _data+_size-1;
-                // Assign...
-                for(size_t i = 0U; i < _size; ++i){
-                    std::allocator_traits<type_a>::construct(_allocator, _data+i, *(il.begin()+i));
+                size_ = il.size();
+                data_ = allocator_.allocate(size_);
+                head_ = data_;
+                tail_ = head_+size_-1U;
+                // Construct...
+                for(size_t i = 0U; i < size_; ++i){
+                    std::allocator_traits<type_a>::construct(allocator_, data_+i, *(il.begin()+i));
                 }
             }
         }
         //--------------------------------------------------------------------------------------------------------------
         //!
         //! @brief Copy constructor (deep copy).
-        //! @note  Example: vla::dynarray<int>    a(b) <=> vla::dynarray<int>    a = b.
-        //!                 vla::dynarray<int, 1> a(b) <=> vla::dynarray<int, 1> a = b.
+        //! @note  Example: vla::dynarray<int>     a(b) <=> vla::dynarray<int>     a = b.
+        //!                 vla::dynarray<int, 1U> a(b) <=> vla::dynarray<int, 1U> a = b.
         //! @see   https://www.geeksforgeeks.org/shallow-copy-and-deep-copy-in-c/
         //!
-        dynarray(const dynarray& other){
+        dynarray(const dynarray& other) noexcept{
             if(other.size() == 0U){
                 // Initialise...
-                _size = 0U;
-                _data = nullptr;
-                _head = nullptr;
-                _tail = nullptr;
+                size_ = 0U;
+                data_ = nullptr;
+                head_ = nullptr;
+                tail_ = nullptr;
             }
             else{
                 // Initialise...
-                _size =  other.size();
-                _data = _allocator.allocate(_size);
-                _head = _data;
-                _tail = _data+_size-1;
-                // Assign...
-                for(size_t i = 0U; i < _size; ++i){
-                    std::allocator_traits<type_a>::construct(_allocator, _data+i, *(other._data+i));
+                size_ = other.size();
+                data_ = allocator_.allocate(size_);
+                head_ = data_;
+                tail_ = head_+size_-1U;
+                // Construct...
+                for(size_t i = 0U; i < size_; ++i){
+                    std::allocator_traits<type_a>::construct(allocator_, data_+i, *(other.data_+i));
                 }
             }
         }
         //--------------------------------------------------------------------------------------------------------------
         //!
         //! @brief Move constructor (initialisation via constructor: dynarray() noexcept).
-        //! @note  Example: vla::dynarray<int>    a(std::move(b)) <=> vla::dynarray<int>    a = std::move(b).
-        //!                 vla::dynarray<int, 1> a(std::move(b)) <=> vla::dynarray<int, 1> a = std::move(b).
+        //! @note  Example: vla::dynarray<int>     a(std::move(b)) <=> vla::dynarray<int>     a = std::move(b).
+        //!                 vla::dynarray<int, 1U> a(std::move(b)) <=> vla::dynarray<int, 1U> a = std::move(b).
         //!
         dynarray(dynarray&& other) noexcept : dynarray(){
             swap(*this, other);
@@ -184,61 +378,61 @@ namespace vla{
         //!        https://stackoverflow.com/questions/75968358/deleting-a-nullptr-may-or-may-not-call-a-deallocation-function-why-not-guarante
         //!
         ~dynarray() noexcept{
-            if(_data != nullptr){
-                for(size_t i = _size; i > 0U; --i){
-                    std::allocator_traits<type_a>::destroy(_allocator, _data+i-1U);
+            if(data_ != nullptr){
+                for(size_t i = size_; i > 0U; --i){
+                    std::allocator_traits<type_a>::destroy(allocator_, data_+i-1U);
                 }
-                _allocator.deallocate(_data, size());
+                allocator_.deallocate(data_, size_);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
         //!
-        //! @brief Template class (N = 2).
+        //! @brief Template class.
         //!
         friend class dynarray<T, 2U, A>;
         //--------------------------------------------------------------------------------------------------------------
         //!
-        //! @brief Element access: at
-        //!                        operator[]
-        //!                        front
-        //!                        back
-        //!                        data
+        //! @brief Element access: at.
+        //!                        operator[].
+        //!                        front.
+        //!                        back.
+        //!                        data.
         //!
         type_r at(size_t i){
-            if(i >= size()){
+            if(i >= size_){
                 throw std::out_of_range("dynarray<T, 1, A>::at(size_t)");
             }
             return (*this)[i];
         }
         const_type_r at(size_t i) const{
-            if(i >= size()){
+            if(i >= size_){
                 throw std::out_of_range("dynarray<T, 1, A>::at(size_t) const");
             }
             return (*this)[i];
         }
         type_r operator[](size_t i) noexcept{
-            return *(_head+i);
+            return *(head_+i);
         }
         const_type_r operator[](size_t i) const noexcept{
-            return *(_head+i);
+            return *(head_+i);
         }
         type_r front() noexcept{
-            return (*this)[0];
+            return (*this)[0U];
         }
         const_type_r front() const noexcept{
-            return (*this)[0];
+            return (*this)[0U];
         }
         type_r back() noexcept{
-            return (*this)[_size-1U];
+            return (*this)[size_-1U];
         }
         const_type_r back() const noexcept{
-            return (*this)[_size-1U];
+            return (*this)[size_-1U];
         }
         type_p data() noexcept{
-            return _head;
+            return head_;
         }
         const_type_p data() const noexcept{
-            return _head;
+            return head_;
         }
         //--------------------------------------------------------------------------------------------------------------
         //!
@@ -246,16 +440,16 @@ namespace vla{
         //!                   end.
         //!
         type_p begin() noexcept{
-            return _head;
+            return head_;
         }
         const_type_p begin() const noexcept{
-            return _head;
+            return head_;
         }
         type_p end() noexcept{
-            return _tail+1;
+            return tail_+1U;
         }
         const_type_p end() const noexcept{
-            return _tail+1;
+            return tail_+1U;
         }
         //--------------------------------------------------------------------------------------------------------------
         //!
@@ -263,13 +457,13 @@ namespace vla{
         //!                  size.
         //!                  max_size.
         //!
-        bool empty() const{
-            return _size == 0U;
+        bool empty() const noexcept{
+            return size_ == 0U;
         }
-        size_t size() const{
-            return _size;
+        size_t size() const noexcept{
+            return size_;
         }
-        size_t max_size() const{
+        size_t max_size() const noexcept{
             return static_cast<size_t>(std::numeric_limits<size_d>::max());
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -278,15 +472,15 @@ namespace vla{
         //!                    swap.
         //!
         void fill(const_type_v& value) noexcept{
-            for(size_t i = 0U; i < _size; ++i){
+            for(size_t i = 0U; i < size_; ++i){
                 (*this)[i] = value;
             }
         }
         friend void swap(dynarray& lhs, dynarray& rhs) noexcept{
-            std::swap(lhs._data, rhs._data);
-            std::swap(lhs._head, rhs._head);
-            std::swap(lhs._tail, rhs._tail);
-            std::swap(lhs._size, rhs._size);
+            std::swap(lhs.data_, rhs.data_);
+            std::swap(lhs.head_, rhs.head_);
+            std::swap(lhs.tail_, rhs.tail_);
+            std::swap(lhs.size_, rhs.size_);
         }
         //--------------------------------------------------------------------------------------------------------------
         //!
@@ -297,7 +491,7 @@ namespace vla{
         friend std::ostream& operator<<(std::ostream& o, const dynarray& other) noexcept{
             o << "[";
             for(size_t i = 0U; i < other._size; ++i){
-                if(i < other._size-1){
+                if(i < other._size-1U){
                     o << other[i] << " ";
                 }
                 else{
@@ -313,6 +507,40 @@ namespace vla{
             return !(lhs == rhs);
         }
         //--------------------------------------------------------------------------------------------------------------
+    public:
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Auxiliary functions.
+        //! @see   https://stackoverflow.com/questions/10442404/invoke-a-c-class-method-without-a-class-instance
+        //!
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief
+        //!
+        //--------------------------------------------------------------------------------------------------------------
+        template<typename ... Args>
+        static size_t get(size_t n, Args&& ...){
+            return n;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief Constructor.
+        //!
+        //!
+        template<typename ... Args>
+        void alloc(type_p p, size_t n, Args&& ... args){
+            // Initialise...
+            data_ = nullptr;
+            head_ = p;
+            tail_ = head_+n-1U;
+            // Assign...
+            for(size_t i = 0U; i < n; ++i){
+                std::allocator_traits<type_a>::construct(allocator_, p+i, std::forward<Args>(args)...);
+            }
+        }
+        //--------------------------------------------------------------------------------------------------------------
     };
+    //------------------------------------------------------------------------------------------------------------------
 }
+
 #endif
