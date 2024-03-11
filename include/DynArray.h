@@ -85,7 +85,7 @@ namespace vla{
             if(1U+sizeof ... (args) < N){
                 throw std::invalid_argument("dynarray<T, N, A>::dynarray(size_t, Args&& ...)");
             }
-            // Set sizes...
+            // Get size of contig. array.
             size_ = n*TYPE_V::get(std::forward<Args>(args)...);
             SIZE_ = n;
 
@@ -94,7 +94,6 @@ namespace vla{
                 data_ = nullptr;
                 head_ = nullptr;
                 tail_ = nullptr;
-                SIZE_ = 0U;
                 DATA_ = nullptr;
             }
             else{
@@ -102,38 +101,16 @@ namespace vla{
                     throw std::invalid_argument("dynarray<T, N, A>::dynarray(size_t, Args&& ...)");
                 }
                 // Initialise...
-                DATA_ = ALLOCATOR_.allocate(SIZE_); //!<Allocate n blocks.
                 data_ = allocator_.allocate(size_); //!<Allocate n elements (contig. array).
                 head_ = data_;
                 tail_ = head_+size_-1U;
-                // Assign...
+                DATA_ = ALLOCATOR_.allocate(SIZE_); //!<Allocate n blocks.
+                // For each block...
                 for(size_t i = 0U; i < SIZE_; ++i){
                     std::allocator_traits<TYPE_A>::construct(ALLOCATOR_, DATA_+i);
-
-
-
                     (DATA_+i)->allocator_ = allocator_;
-                    (DATA_+i)->alloc(data_+size_/n*i, std::forward<Args>(args)...);
+                    (DATA_+i)->set(data_+i*size_/n, std::forward<Args>(args)...);
                 }
-            }
-        }
-
-        template<typename ... Args>
-        void alloc(type_p p, size_t n, Args&& ... args){
-            // Initialise...
-
-            size_t size_blk = TYPE_V::get(std::forward<Args>(args)...);
-
-            DATA_ = ALLOCATOR_.allocate(n);
-            data_ = nullptr;
-            head_ = p;
-            tail_ = head_+n*size_blk-1U;
-            // Assign...
-            for(size_t i = 0U; i < n; ++i){
-                std::allocator_traits<TYPE_A>::construct(ALLOCATOR_, p+i);
-
-                (DATA_+i)->allocator_ = allocator_;
-                (DATA_+i)->alloc(p+i*size_blk, std::forward<Args>(args)...);
             }
         }
         //--------------------------------------------------------------------------------------------------------------
@@ -167,11 +144,41 @@ namespace vla{
         //!                        back.
         //!                        data.
         //!
+        TYPE_R at(size_t i){
+            if(i >= size()){
+                throw std::out_of_range("dynarray<T, N, A>::at(size_t)");
+            }
+            return (*this)[i];
+        }
+        const_TYPE_R at(size_t i) const{
+            if(i >= size()){
+                throw std::out_of_range("dynarray<T, N, A>::at(size_t) const");
+            }
+            return (*this)[i];
+        }
         TYPE_R operator[](size_t i) noexcept{
             return *(DATA_+i);
         }
         const_TYPE_R operator[](size_t i) const noexcept{
             return *(DATA_+i);
+        }
+        TYPE_R front() noexcept{
+            return (*this)[0U];
+        }
+        const_TYPE_R front() const noexcept{
+            return (*this)[0U];
+        }
+        TYPE_R back() noexcept{
+            return (*this)[SIZE_-1U];
+        }
+        const_TYPE_R back() const noexcept{
+            return (*this)[SIZE_-1U];
+        }
+        TYPE_P data() noexcept{
+            return head_;
+        }
+        const_TYPE_P data() const noexcept{
+            return head_;
         }
         //--------------------------------------------------------------------------------------------------------------
         //!
@@ -185,10 +192,13 @@ namespace vla{
         //!                  max_size.
         //!
         bool empty() const{
-            return SIZE_ == 0U;
+            return size_ == 0U;
         }
         size_t size() const{
-            return SIZE_;
+
+            std::cout << "X" << std::endl;
+
+            return static_cast<size_t>(head_-tail_+1U);
         }
         size_t max_size() const{
             return static_cast<size_t>(std::numeric_limits<size_d>::max());
@@ -205,12 +215,40 @@ namespace vla{
         //!                              operator!= .
         //!
         //--------------------------------------------------------------------------------------------------------------
+    private:
+        //--------------------------------------------------------------------------------------------------------------
         //!
         //! @brief Auxiliary functions.
         //!
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief
+        //!
+        //--------------------------------------------------------------------------------------------------------------
         template<typename ... Args>
         static size_t get(size_t n, Args&& ... args){
             return TYPE_V::get(std::forward<Args>(args)...)*n;
+        }
+        //--------------------------------------------------------------------------------------------------------------
+        //!
+        //! @brief
+        //!
+        template<typename ... Args>
+        void set(type_p p, size_t n, Args&& ... args){
+            // Get size of array block.
+            size_t bsize = TYPE_V::get(std::forward<Args>(args)...);
+
+            // Initialise...
+            data_ = nullptr;
+            head_ = p;
+            tail_ = head_+n*bsize-1U;
+            DATA_ = ALLOCATOR_.allocate(n);
+            // Construct...
+            for(size_t i = 0U; i < n; ++i){
+                std::allocator_traits<TYPE_A>::construct(ALLOCATOR_, p+i);
+                (DATA_+i)->allocator_ = allocator_;
+                (DATA_+i)->set(p+i*bsize, std::forward<Args>(args)...);
+            }
         }
         //--------------------------------------------------------------------------------------------------------------
     };
@@ -399,13 +437,13 @@ namespace vla{
         //!                        data.
         //!
         type_r at(size_t i){
-            if(i >= size_){
+            if(i >= size()){
                 throw std::out_of_range("dynarray<T, 1, A>::at(size_t)");
             }
             return (*this)[i];
         }
         const_type_r at(size_t i) const{
-            if(i >= size_){
+            if(i >= size()){
                 throw std::out_of_range("dynarray<T, 1, A>::at(size_t) const");
             }
             return (*this)[i];
@@ -423,10 +461,10 @@ namespace vla{
             return (*this)[0U];
         }
         type_r back() noexcept{
-            return (*this)[size_-1U];
+            return (*this)[size()-1U];
         }
         const_type_r back() const noexcept{
-            return (*this)[size_-1U];
+            return (*this)[size()-1U];
         }
         type_p data() noexcept{
             return head_;
@@ -458,10 +496,10 @@ namespace vla{
         //!                  max_size.
         //!
         bool empty() const noexcept{
-            return size_ == 0U;
+            return size() == 0U;
         }
         size_t size() const noexcept{
-            return size_;
+            return static_cast<size_t>(tail_-head_+1U);
         }
         size_t max_size() const noexcept{
             return static_cast<size_t>(std::numeric_limits<size_d>::max());
@@ -472,7 +510,7 @@ namespace vla{
         //!                    swap.
         //!
         void fill(const_type_v& value) noexcept{
-            for(size_t i = 0U; i < size_; ++i){
+            for(size_t i = 0U; i < size(); ++i){
                 (*this)[i] = value;
             }
         }
@@ -490,8 +528,8 @@ namespace vla{
         //!
         friend std::ostream& operator<<(std::ostream& o, const dynarray& other) noexcept{
             o << "[";
-            for(size_t i = 0U; i < other._size; ++i){
-                if(i < other._size-1U){
+            for(size_t i = 0U; i < other.size(); ++i){
+                if(i < other.size()-1U){
                     o << other[i] << " ";
                 }
                 else{
@@ -507,7 +545,7 @@ namespace vla{
             return !(lhs == rhs);
         }
         //--------------------------------------------------------------------------------------------------------------
-    public:
+    private:
         //--------------------------------------------------------------------------------------------------------------
         //!
         //! @brief Auxiliary functions.
@@ -524,16 +562,15 @@ namespace vla{
         }
         //--------------------------------------------------------------------------------------------------------------
         //!
-        //! @brief Constructor.
-        //!
+        //! @brief
         //!
         template<typename ... Args>
-        void alloc(type_p p, size_t n, Args&& ... args){
+        void set(type_p p, size_t n, Args&& ... args){
             // Initialise...
             data_ = nullptr;
             head_ = p;
             tail_ = head_+n-1U;
-            // Assign...
+            // Construct...
             for(size_t i = 0U; i < n; ++i){
                 std::allocator_traits<type_a>::construct(allocator_, p+i, std::forward<Args>(args)...);
             }
