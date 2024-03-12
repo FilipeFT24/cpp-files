@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25.1)
 
 #[[
 Project details.
-]]
+#]]
 project(
 	"Dynarray"
 	VERSION 0.1.0
@@ -14,7 +14,7 @@ endif()
 
 #[[
 Project directories.
-]]
+#]]
 include(cmake/Utils.cmake)
 include(cmake/CompilerWarnings.cmake)
 include(cmake/Doxygen.cmake)
@@ -25,27 +25,27 @@ include(cmake/Vcpkg.cmake)
 
 #[[
 Project setup.
-]]
+#]]
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
 	#[[
 	Header-only.
-	]]
+	#]]
 	add_library(${PROJECT_NAME} INTERFACE)
 elseif(${PROJECT_NAME}_BUILD_EXECUTABLE)
 	#[[
 	Executable...
-	]]
+	#]]
 	add_executable(${PROJECT_NAME} ${exe_sources})
 	#[[
 	...w/ unit testing.
-	]]
+	#]]
 	if(${PROJECT_NAME}_ENABLE_UNIT_TESTING)
 		add_library(${PROJECT_NAME}_LIB ${headers} ${sources})
 	endif()
 else()
 	#[[
 	Else.
-	]]
+	#]]
 	add_library(
 		${PROJECT_NAME}
 		${headers}
@@ -72,20 +72,20 @@ endif()
 
 #[[
 Project standard and warnings.
-]]
+#]]
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
 	#[[
 	Header-only.
-	]]
+	#]]
 	target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
 else()
 	#[[
 	Else.
-	]]
+	#]]
 	target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
 	#[[
 	Executable && w/ unit testing.
-	]]
+	#]]
 	if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
 		target_compile_features(${PROJECT_NAME}_LIB PUBLIC cxx_std_20)
 	endif()
@@ -94,11 +94,11 @@ set_project_warnings(${PROJECT_NAME})
 
 #[[
 Project build/user include directories.
-]]
+#]]
 if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
 	#[[
 	Header-only.
-	]]
+	#]]
 	target_include_directories(
 		${PROJECT_NAME}
 		INTERFACE
@@ -108,7 +108,7 @@ if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
 else()
 	#[[
 	Else.
-	]]
+	#]]
 	target_include_directories(
 		${PROJECT_NAME}
 		PUBLIC
@@ -120,7 +120,7 @@ else()
 	if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
 		#[[
 		Executable && w/ unit testing.
-		]]
+		#]]
 		target_include_directories(
 			${PROJECT_NAME}_LIB
 			PUBLIC
@@ -134,7 +134,7 @@ endif()
 
 #[[
 Unit testing.
-]]
+#]]
 if(${PROJECT_NAME}_ENABLE_UNIT_TESTING)
 	enable_testing()
 	add_subdirectory(test)
@@ -142,5 +142,5 @@ endif()
 
 #[[
 Format the project using “clang-format” (i.e., cmake --build build --target clang-format).
-]]
+#]]
 #add_clang_format_target()

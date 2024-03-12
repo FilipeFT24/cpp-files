@@ -1,6 +1,6 @@
 #[[
 Clang-tidy.
-]]
+#]]
 if(${PROJECT_NAME}_ENABLE_CLANG_TIDY)
 	find_program(CLANGTIDY clang-tidy)
 	if(CLANGTIDY)
@@ -12,7 +12,7 @@ endif()
 
 #[[
 Cppcheck.
-]]
+#]]
 if(${PROJECT_NAME}_ENABLE_CPPCHECK)
 	find_program(CPPCHECK cppcheck)
 	if(CPPCHECK)
