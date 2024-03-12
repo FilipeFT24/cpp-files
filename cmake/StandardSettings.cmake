@@ -17,7 +17,7 @@ option(${PROJECT_NAME}_ENABLE_VCPKG "Enable the Vcpkg package manager for this p
 #[[
 Doxygen.
 #]]
-option(${PROJECT_NAME}_ENABLE_DOXYGEN "Enable Doxygen documentation builds of source." OFF)
+option(${PROJECT_NAME}_ENABLE_DOXYGEN "Enable Doxygen documentation builds of source." ON)
 
 #[[
 Unit testing.

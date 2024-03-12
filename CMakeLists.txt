@@ -17,7 +17,7 @@ Project directories.
 #]]
 include(cmake/Utils.cmake)
 include(cmake/CompilerWarnings.cmake)
-include(cmake/Doxygen.cmake)
+#include(cmake/Doxygen.cmake)
 include(cmake/SourcesAndHeaders.cmake)
 include(cmake/StandardSettings.cmake)
 include(cmake/StaticAnalyzers.cmake)
@@ -115,7 +115,7 @@ else()
 		$<INSTALL_INTERFACE:include>
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 		PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${CMAKE_CURRENT_SOURCE_DIR}/include
 	)
 	if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
 		#[[
@@ -127,7 +127,7 @@ else()
 			$<INSTALL_INTERFACE:include>
 			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 			PRIVATE
-			${CMAKE_CURRENT_SOURCE_DIR}/src
+			${CMAKE_CURRENT_SOURCE_DIR}/include
 		)
 	endif()
 endif()
@@ -144,3 +144,5 @@ endif()
 Format the project using “clang-format” (i.e., cmake --build build --target clang-format).
 #]]
 #add_clang_format_target()
+
+add_subdirectory(doc)

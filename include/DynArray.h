@@ -1,8 +1,9 @@
 /**
- * @file   DynArray.h
- * @author Filipe Forte Tenreiro <filipe.tenreiro1@gmail.com>
- * @date   march 2024
- * @brief  Dynamic array header-only library.
+ * @file    DynArray.h
+ * @author  Filipe Forte Tenreiro <filipe.tenreiro1@gmail.com>
+ * @brief   Dynamic array header-only library.
+ * @version 0.1
+ * @date    march 2024
  */
 
 #ifndef DYNARRAY_H
@@ -394,7 +395,7 @@ namespace vla{
         //!                 vla::dynarray<int, 1U> a(std::move(b)) <=> vla::dynarray<int, 1U> a = std::move(b).
         //!
         dynarray(dynarray&& other) noexcept : dynarray(){
-            swap(*this, other);
+                swap(*this, other);
         }
         //--------------------------------------------------------------------------------------------------------------
         //!

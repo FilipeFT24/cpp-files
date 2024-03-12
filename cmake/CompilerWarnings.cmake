@@ -1,7 +1,7 @@
 function(set_project_warnings project_name)
 	#[[
 	Clang warnings.
-	]]
+	#]]
 	set(CLANG_WARNINGS
 	    -Wall
 	    -Wextra
@@ -20,7 +20,7 @@ function(set_project_warnings project_name)
 	)
 	#[[
 	GCC warnings.
-	]]
+	#]]
 	set(GCC_WARNINGS
 	    ${CLANG_WARNINGS}
 	    -Wmisleading-indentation
@@ -31,7 +31,7 @@ function(set_project_warnings project_name)
 	)
 	#[[
 	MSVC warnings.
-	]]
+	#]]
 	set(MSVC_WARNINGS
 	    /W4
 	    /w14242
@@ -57,14 +57,14 @@ function(set_project_warnings project_name)
 
 	#[[
 	Treat warnings as errors?
-	]]
+	#]]
 	if(${PROJECT_NAME}_WARNINGS_AS_ERRORS)
 		set(CLANG_WARNINGS ${CLANG_WARNINGS} -Werror)
-		set( MSVC_WARNINGS  ${MSVC_WARNINGS} /WX)
+		set(MSVC_WARNINGS ${MSVC_WARNINGS} /WX)
 	endif()
 	#[[
 	Project warnings.
-	]]
+	#]]
 	if(MSVC)
 		set(PROJECT_WARNINGS ${MSVC_WARNINGS})
 	elseif(CMAKE_CXX_COMPILER_ID MATCHES ".*Clang")
@@ -72,7 +72,7 @@ function(set_project_warnings project_name)
 	elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 		set(PROJECT_WARNINGS ${GCC_WARNINGS})
 	else()
-		message(AUTHOR_WARNING "No compiler warnings set for '${CMAKE_CXX_COMPILER_ID}' compiler.")
+		message(AUTHOR_WARNING "No (compiler) warnings set for '${CMAKE_CXX_COMPILER_ID}' compiler.\n")
 	endif()
 	if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
 		target_compile_options(${project_name} INTERFACE ${PROJECT_WARNINGS})
