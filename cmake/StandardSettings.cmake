@@ -10,11 +10,6 @@ Compiler options.
 option(${PROJECT_NAME}_WARNINGS_AS_ERRORS "Treat (compiler) warnings as errors." OFF)
 
 #[[
-Package managers.
-#]]
-option(${PROJECT_NAME}_ENABLE_VCPKG "Enable the Vcpkg package manager for this project." ON)
-
-#[[
 Doxygen.
 #]]
 option(${PROJECT_NAME}_ENABLE_DOXYGEN "Enable Doxygen documentation builds of source." ON)

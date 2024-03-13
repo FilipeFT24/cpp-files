@@ -17,11 +17,9 @@ Project directories.
 #]]
 include(cmake/Utils.cmake)
 include(cmake/CompilerWarnings.cmake)
-#include(cmake/Doxygen.cmake)
 include(cmake/SourcesAndHeaders.cmake)
 include(cmake/StandardSettings.cmake)
 include(cmake/StaticAnalyzers.cmake)
-include(cmake/Vcpkg.cmake)
 
 #[[
 Project setup.
@@ -141,8 +139,17 @@ if(${PROJECT_NAME}_ENABLE_UNIT_TESTING)
 endif()
 
 #[[
+Doxygen.
+#]]
+if(${PROJECT_NAME}_ENABLE_DOXYGEN)
+	add_subdirectory(doc)
+endif()
+
+#[[
 Format the project using “clang-format” (i.e., cmake --build build --target clang-format).
 #]]
 #add_clang_format_target()
 
-add_subdirectory(doc)
+#[[
+Clean.
+#]]
