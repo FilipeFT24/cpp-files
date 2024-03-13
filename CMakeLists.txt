@@ -149,7 +149,3 @@ endif()
 Format the project using “clang-format” (i.e., cmake --build build --target clang-format).
 #]]
 #add_clang_format_target()
-
-#[[
-Clean.
-#]]
