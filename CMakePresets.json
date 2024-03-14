@@ -10,31 +10,14 @@
       "name": "configure-default",
       "hidden": true,
       "generator": "Ninja",
-      "architecture": {
-        "value": "x64",
-        "strategy": "external"
-      },
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "BUILD_EXECUTABLE": "OFF",
         "BUILD_HEADERS_ONLY": "ON",
-        "BUILD_SHARED_LIBS": "OFF",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_CXX_EXTENSIONS": "FALSE",
         "CMAKE_CXX_STANDARD": "23",
-        "CMAKE_CXX_STANDARD_REQUIRED": "TRUE",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "CMAKE_POSITION_INDEPENDENT_CODE": "TRUE",
         "CMAKE_TOOLCHAIN_FILE": "$env{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake",
-        "CMAKE_VISIBILITY_INLINES_HIDDEN": "yes",
-        "ENABLE_ASAN": "OFF",
-        "ENABLE_CCACHE": "OFF",
-        "ENABLE_CLANG_TIDY": "OFF",
-        "ENABLE_CODE_COVERAGE": "OFF",
-        "ENABLE_CPPCHECK": "OFF",
-        "ENABLE_LTO": "OFF",
-        "ENABLE_WARNINGS_AS_ERRORS": "OFF",
-        "VERBOSE_OUTPUT": "ON"
+        "ENABLE_WARNINGS_AS_ERRORS": "OFF"
       }
     },
     {
@@ -86,8 +69,7 @@
       "inherits": "configure-default",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -march = native -mtune = native",
-        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -march=native -mtune=native",
         "ENABLE_DOXYGEN": "ON",
         "ENABLE_UNIT_TESTING": "OFF"
       }

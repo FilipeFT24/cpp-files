@@ -13,13 +13,10 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
 endif()
 
 #[[
-Project directories.
+(Include) project directories.
 ]]
-include(cmake/Utils.cmake)
 include(cmake/CompilerWarnings.cmake)
 include(cmake/SourcesAndHeaders.cmake)
-include(cmake/StandardSettings.cmake)
-include(cmake/StaticAnalyzers.cmake)
 
 #[[
 Project setup.
@@ -145,8 +142,3 @@ Doxygen.
 if(${ENABLE_DOXYGEN})
 	add_subdirectory(doc)
 endif()
-
-#[[
-Format the project using “clang-format” (i.e., cmake --build build --target clang-format).
-]]
-#add_clang_format_target()
