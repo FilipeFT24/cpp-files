@@ -7,28 +7,182 @@
   },
   "configurePresets": [
     {
-      "name": "default",
-      "displayName": "Default",
-      "description": "Default build using Ninja generator",
+      "name": "configure-default",
+      "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_TOOLCHAIN_FILE": "$env{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        "BUILD_HEADERS_ONLY": "ON",
+        "BUILD_EXECUTABLE": "OFF",
+        "BUILD_SHARED_LIBS": "OFF",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_CXX_STANDARD_REQUIRED": "TRUE",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_TOOLCHAIN_FILE": "$env{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "ENABLE_ASAN": "OFF",
+        "ENABLE_CCACHE": "OFF",
+        "ENABLE_CLANG_TIDY": "OFF",
+        "ENABLE_CODE_COVERAGE": "OFF",
+        "ENABLE_CPPCHECK": "OFF",
+        "ENABLE_LTO": "OFF",
+        "ENABLE_WARNINGS_AS_ERRORS": "OFF",
+        "VCPKG_TARGET_TRIPLET": "x64-linux",
+        "VERBOSE_OUTPUT": "OFF"
+      },
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "toolset": {
+        "value": "host=x64",
+        "strategy": "external"
       }
+    },
+    {
+      "name": "x64-Debug",
+      "inherits": "configure-default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-DDEBUG_CONFIG",
+        "ENABLE_DOXYGEN": "OFF",
+        "ENABLE_UNIT_TESTING": "ON"
+      },
+      "warnings": {
+        "dev": false,
+        "uninitialized": false,
+        "unusedCli": false
+      }
+    },
+    {
+      "name": "x64-RelWithDebInfo",
+      "inherits": "configure-default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "ENABLE_DOXYGEN": "OFF",
+        "ENABLE_UNIT_TESTING": "ON"
+      },
+      "warnings": {
+        "dev": false,
+        "uninitialized": false,
+        "unusedCli": false
+      }
+    },
+    {
+      "name": "x64-Release",
+      "inherits": "configure-default",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ENABLE_DOXYGEN": "ON",
+        "ENABLE_UNIT_TESTING": "OFF"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "build-default",
+      "hidden": true
+    },
+    {
+      "name": "x64-Debug",
+      "configurePreset": "x64-Debug",
+      "inherits": "build-default"
+    },
+    {
+      "name": "x64-RelWithDebInfo",
+      "configurePreset": "x64-RelWithDebInfo",
+      "inherits": "build-default"
+    },
+    {
+      "name": "x64-Release",
+      "configurePreset": "x64-Release",
+      "inherits": "build-default"
+    },
+    {
+      "name": "Doxygen",
+      "configurePreset": "x64-Release",
+      "inherits": "build-default",
+      "targets": "Doxygen"
     }
   ],
   "testPresets": [
     {
-      "name": "default",
-      "configurePreset": "default",
-      "output": {
-        "outputOnFailure": true
-      },
+      "name": "test-default",
+      "hidden": true,
       "execution": {
         "noTestsAction": "error",
+        "scheduleRandom": true,
         "stopOnFailure": true
+      },
+      "output": {
+        "verbosity": "extra",
+        "outputOnFailure": true
       }
+    },
+    {
+      "name": "x64-Debug",
+      "inherits": "test-default",
+      "configurePreset": "x64-Debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "x64-RelWithDebInfo",
+      "inherits": "test-default",
+      "configurePreset": "x64-RelWithDebInfo",
+      "configuration": "RelWithDebInfo"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "dev",
+      "steps": [
+        {
+          "name": "x64-Debug",
+          "type": "configure"
+        },
+        {
+          "name": "x64-Debug",
+          "type": "build"
+        },
+        {
+          "name": "x64-Debug",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "profiling",
+      "steps": [
+        {
+          "name": "x64-RelWithDebInfo",
+          "type": "configure"
+        },
+        {
+          "name": "x64-RelWithDebInfo",
+          "type": "build"
+        },
+        {
+          "name": "x64-RelWithDebInfo",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "release",
+      "steps": [
+        {
+          "name": "x64-Release",
+          "type": "configure"
+        },
+        {
+          "name": "x64-Release",
+          "type": "build"
+        },
+        {
+          "name": "Doxygen",
+          "type": "build"
+        }
+      ]
     }
   ]
 }

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25.1)
 
 #[[
 Project details.
-#]]
+]]
 project(
 	"Dynarray"
 	VERSION 0.1.0
@@ -14,7 +14,7 @@ endif()
 
 #[[
 Project directories.
-#]]
+]]
 include(cmake/Utils.cmake)
 include(cmake/CompilerWarnings.cmake)
 include(cmake/SourcesAndHeaders.cmake)
@@ -23,27 +23,27 @@ include(cmake/StaticAnalyzers.cmake)
 
 #[[
 Project setup.
-#]]
-if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
+]]
+if(${BUILD_HEADERS_ONLY})
 	#[[
 	Header-only.
-	#]]
+	]]
 	add_library(${PROJECT_NAME} INTERFACE)
-elseif(${PROJECT_NAME}_BUILD_EXECUTABLE)
+elseif(${BUILD_EXECUTABLE})
 	#[[
 	Executable...
-	#]]
+	]]
 	add_executable(${PROJECT_NAME} ${exe_sources})
 	#[[
 	...w/ unit testing.
-	#]]
-	if(${PROJECT_NAME}_ENABLE_UNIT_TESTING)
+	]]
+	if(${ENABLE_UNIT_TESTING})
 		add_library(${PROJECT_NAME}_LIB ${headers} ${sources})
 	endif()
 else()
 	#[[
 	Else.
-	#]]
+	]]
 	add_library(
 		${PROJECT_NAME}
 		${headers}
@@ -58,7 +58,7 @@ set_target_properties(
 	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
 	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
 )
-if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
+if(${BUILD_EXECUTABLE} AND ${ENABLE_UNIT_TESTING})
 	set_target_properties(
 		${PROJECT_NAME}_LIB
 		PROPERTIES
@@ -70,33 +70,34 @@ endif()
 
 #[[
 Project standard and warnings.
-#]]
-if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
+]]
+if(${BUILD_HEADERS_ONLY})
 	#[[
 	Header-only.
-	#]]
-	target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+	]]
+	target_compile_features(
+		${PROJECT_NAME} INTERFACE ${CXX_STANDARD})
 else()
 	#[[
 	Else.
-	#]]
-	target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+	]]
+	target_compile_features(${PROJECT_NAME} PUBLIC ${CXX_STANDARD})
 	#[[
 	Executable && w/ unit testing.
-	#]]
-	if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
-		target_compile_features(${PROJECT_NAME}_LIB PUBLIC cxx_std_20)
+	]]
+	if(${BUILD_EXECUTABLE} AND ${ENABLE_UNIT_TESTING})
+		target_compile_features(${PROJECT_NAME}_LIB PUBLIC ${CXX_STANDARD})
 	endif()
 endif()
 set_project_warnings(${PROJECT_NAME})
 
 #[[
 Project build/user include directories.
-#]]
-if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
+]]
+if(${BUILD_HEADERS_ONLY})
 	#[[
 	Header-only.
-	#]]
+	]]
 	target_include_directories(
 		${PROJECT_NAME}
 		INTERFACE
@@ -106,7 +107,7 @@ if(${PROJECT_NAME}_BUILD_HEADERS_ONLY)
 else()
 	#[[
 	Else.
-	#]]
+	]]
 	target_include_directories(
 		${PROJECT_NAME}
 		PUBLIC
@@ -115,10 +116,10 @@ else()
 		PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/include
 	)
-	if(${PROJECT_NAME}_BUILD_EXECUTABLE AND ${PROJECT_NAME}_ENABLE_UNIT_TESTING)
+	if(${BUILD_EXECUTABLE} AND ${ENABLE_UNIT_TESTING})
 		#[[
 		Executable && w/ unit testing.
-		#]]
+		]]
 		target_include_directories(
 			${PROJECT_NAME}_LIB
 			PUBLIC
@@ -132,20 +133,20 @@ endif()
 
 #[[
 Unit testing.
-#]]
-if(${PROJECT_NAME}_ENABLE_UNIT_TESTING)
+]]
+if(${ENABLE_UNIT_TESTING})
 	enable_testing()
 	add_subdirectory(test)
 endif()
 
 #[[
 Doxygen.
-#]]
-if(${PROJECT_NAME}_ENABLE_DOXYGEN)
+]]
+if(${ENABLE_DOXYGEN})
 	add_subdirectory(doc)
 endif()
 
 #[[
 Format the project using “clang-format” (i.e., cmake --build build --target clang-format).
-#]]
+]]
 #add_clang_format_target()
