@@ -14,20 +14,19 @@
         "value": "x64",
         "strategy": "external"
       },
-      "toolset": {
-        "value": "host=x64",
-        "strategy": "external"
-      },
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "BUILD_EXECUTABLE": "OFF",
         "BUILD_HEADERS_ONLY": "ON",
         "BUILD_SHARED_LIBS": "OFF",
         "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_EXTENSIONS": "FALSE",
         "CMAKE_CXX_STANDARD": "23",
         "CMAKE_CXX_STANDARD_REQUIRED": "TRUE",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_POSITION_INDEPENDENT_CODE": "TRUE",
         "CMAKE_TOOLCHAIN_FILE": "$env{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_VISIBILITY_INLINES_HIDDEN": "yes",
         "ENABLE_ASAN": "OFF",
         "ENABLE_CCACHE": "OFF",
         "ENABLE_CLANG_TIDY": "OFF",
@@ -35,44 +34,60 @@
         "ENABLE_CPPCHECK": "OFF",
         "ENABLE_LTO": "OFF",
         "ENABLE_WARNINGS_AS_ERRORS": "OFF",
-        "VCPKG_TARGET_TRIPLET": "x64-linux",
-        "VERBOSE_OUTPUT": "OFF"
+        "VERBOSE_OUTPUT": "ON"
+      }
+    },
+    {
+      "name": "configure-common",
+      "hidden": true,
+      "cacheVariables": {
+        "ENABLE_DOXYGEN": "OFF",
+        "ENABLE_UNIT_TESTING": "ON"
+      },
+      "warnings": {
+        "dev": true,
+        "deprecated": true,
+        "uninitialized": false,
+        "unusedCli": true,
+        "systemVars": true
+      },
+      "errors": {
+        "dev": true,
+        "deprecated": true
       }
     },
     {
       "name": "x64-Debug",
-      "inherits": "configure-default",
+      "description": "-O0 -g",
+      "inherits": [
+        "configure-default",
+        "configure-common"
+      ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS": "-DDEBUG_CONFIG",
-        "ENABLE_DOXYGEN": "OFF",
-        "ENABLE_UNIT_TESTING": "ON"
-      },
-      "warnings": {
-        "dev": false,
-        "uninitialized": false,
-        "unusedCli": false
+        "CMAKE_CXX_FLAGS_DEBUG": "-O0 -g3 -ggdb -fno-omit-frame-pointer"
       }
     },
     {
       "name": "x64-RelWithDebInfo",
-      "inherits": "configure-default",
+      "description": "-O2 -g -DNDEBUG",
+      "inherits": [
+        "configure-default",
+        "configure-common"
+      ],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-        "ENABLE_DOXYGEN": "OFF",
-        "ENABLE_UNIT_TESTING": "ON"
-      },
-      "warnings": {
-        "dev": false,
-        "uninitialized": false,
-        "unusedCli": false
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-Og -g3 -g -fno-omit-frame-pointer"
       }
     },
     {
       "name": "x64-Release",
+      "description": "-O3 -DNDEBUG",
       "inherits": "configure-default",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG -march = native -mtune = native",
+        "CMAKE_INTERPROCEDURAL_OPTIMIZATION": "TRUE",
         "ENABLE_DOXYGEN": "ON",
         "ENABLE_UNIT_TESTING": "OFF"
       }
@@ -81,25 +96,30 @@
   "buildPresets": [
     {
       "name": "build-default",
-      "hidden": true
+      "hidden": true,
+      "cleanFirst": true
     },
     {
       "name": "x64-Debug",
+      "hidden": true,
       "inherits": "build-default",
       "configurePreset": "x64-Debug"
     },
     {
       "name": "x64-RelWithDebInfo",
+      "hidden": true,
       "inherits": "build-default",
       "configurePreset": "x64-RelWithDebInfo"
     },
     {
       "name": "x64-Release",
+      "hidden": true,
       "inherits": "build-default",
       "configurePreset": "x64-Release"
     },
     {
       "name": "Doxygen",
+      "hidden": true,
       "inherits": "build-default",
       "configurePreset": "x64-Release",
       "targets": "Doxygen"
