@@ -55,6 +55,7 @@ function(set_project_warnings project_name)
 	    /w14906
 	    /w14928
 	)
+
 	#[[
 	Treat warnings as errors?
 	]]
@@ -63,6 +64,7 @@ function(set_project_warnings project_name)
 		set(GCC_WARNINGS ${GCC_WARNINGS} -Werror)
 		set(MSVC_WARNINGS ${MSVC_WARNINGS} /WX)
 	endif()
+
 	#[[
 	Project warnings.
 	]]
