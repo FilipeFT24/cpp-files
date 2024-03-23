@@ -6,8 +6,8 @@
  * @date    march 2024
  */
 
-#ifndef DYNARRAY_H
-#define DYNARRAY_H
+#ifndef DYNARRAY_DYNARRAY_H
+#define DYNARRAY_DYNARRAY_H
 
 #include<iostream>
 #include<stdexcept>
